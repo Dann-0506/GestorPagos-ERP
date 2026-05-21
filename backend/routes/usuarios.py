@@ -147,10 +147,12 @@ def gestionar_usuario(id_usuario: int) -> tuple[Response, int]:
         try:
             conn   = get_connection()
             cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cursor.execute('SELECT "Nombre", "Username" FROM "USUARIO" WHERE "Id_Usuario" = %s', (id_usuario,))
+            cursor.execute('SELECT "Nombre", "Username", "Es_Raiz" FROM "USUARIO" WHERE "Id_Usuario" = %s', (id_usuario,))
             usuario = cursor.fetchone()
             if not usuario:
                 return jsonify({ 'success': False, 'message': 'Usuario no encontrado.' }), 404
+            if usuario['Es_Raiz']:
+                return jsonify({ 'success': False, 'message': 'La cuenta de administrador raíz no puede eliminarse.' }), 403
             cursor.execute('DELETE FROM "USUARIO" WHERE "Id_Usuario" = %s', (id_usuario,))
             conn.commit()
             return jsonify({ 'success': True, 'message': 'Usuario eliminado correctamente.' }), 200
@@ -179,9 +181,12 @@ def gestionar_usuario(id_usuario: int) -> tuple[Response, int]:
     try:
         conn   = get_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute('SELECT 1 FROM "USUARIO" WHERE "Id_Usuario" = %s', (id_usuario,))
-        if not cursor.fetchone():
+        cursor.execute('SELECT "Es_Raiz", "Id_Rol" FROM "USUARIO" WHERE "Id_Usuario" = %s', (id_usuario,))
+        usuario_actual = cursor.fetchone()
+        if not usuario_actual:
             return jsonify({ 'success': False, 'message': 'Usuario no encontrado.' }), 404
+        if usuario_actual['Es_Raiz'] and int(id_rol) != usuario_actual['Id_Rol']:
+            return jsonify({ 'success': False, 'message': 'No se puede cambiar el rol de la cuenta de administrador raíz.' }), 403
         cursor.execute('SELECT 1 FROM "USUARIO" WHERE "Username" = %s AND "Id_Usuario" != %s', (username, id_usuario))
         if cursor.fetchone():
             return jsonify({ 'success': False, 'message': 'El nombre de usuario ya está en uso.' }), 409

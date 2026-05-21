@@ -1,13 +1,14 @@
 """
 SolarVer – Utilidades de configuración inicial
-Ejecutar desde la carpeta / con: python setup_dev.py
+Ejecutar desde la carpeta / con: python setup_solarver_dev.py
 """
 
 import os
 
-def crear_env():
+
+def crear_env() -> None:
     """Crea el archivo .env si no existe."""
-    env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
 
     if os.path.exists(env_path):
         print(f"Ya existe un archivo .env en {env_path}")
@@ -38,7 +39,8 @@ RESEND_FROM=noreply@solarver.com
     print(f"Archivo .env creado en: {os.path.abspath(env_path)}")
     print("Edita DB_PASSWORD con tu contraseña de PostgreSQL")
 
-def verificar_conexion():
+
+def verificar_conexion() -> None:
     """Verifica que la conexión a la BD funciona."""
     try:
         from dotenv import load_dotenv
@@ -57,15 +59,27 @@ def verificar_conexion():
         print(f"Error de conexión: {e}")
         print("Verifica que PostgreSQL esté corriendo y que .env esté configurado")
 
+
+def ejecutar_seed_admin() -> None:
+    """Ejecuta seed_admin.py para crear la cuenta de administrador raíz."""
+    import importlib.util
+    seed_path = os.path.join(os.path.dirname(__file__), 'seed_admin.py')
+    spec = importlib.util.spec_from_file_location('seed_admin', seed_path)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    modulo.crear_admin_raiz()
+
+
 if __name__ == '__main__':
     print("═══════════════════════════════════")
     print("  SolarVer – Setup de desarrollo   ")
     print("═══════════════════════════════════")
 
     opciones = {
-        '1': ('Crear archivo .env',                    crear_env),
-        '2': ('Verificar conexión a la BD',            verificar_conexion),
-        '3': ('Hacer todo (1 + 2)',                None),
+        '1': ('Crear archivo .env',                crear_env),
+        '2': ('Verificar conexión a la BD',        verificar_conexion),
+        '3': ('Crear cuenta de administrador raíz', ejecutar_seed_admin),
+        '4': ('Hacer todo (1 + 2 + 3)',            None),
     }
 
     print("\n¿Qué deseas hacer?")
@@ -74,9 +88,10 @@ if __name__ == '__main__':
 
     eleccion = input("\nOpción: ").strip()
 
-    if eleccion == '3':
+    if eleccion == '4':
         crear_env()
         verificar_conexion()
+        ejecutar_seed_admin()
     elif eleccion in opciones:
         opciones[eleccion][1]()
     else:

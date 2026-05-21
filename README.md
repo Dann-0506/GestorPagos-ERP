@@ -69,3 +69,5 @@ Para revisar y hacer funcionar este proyecto, sigue estos pasos:
 ## Colaboradores
 - Daniel Landero Arias
 - Eduardo Novoa Siles
+- Jonathan Cruz Luis
+- Jorge Manuel Manrique Mendoza
