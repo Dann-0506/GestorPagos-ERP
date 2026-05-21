@@ -27,6 +27,7 @@ CREATE TABLE "ROL" (
 );
 
 -- Usuarios del sistema con credenciales, rol asignado y bloqueo por intentos fallidos.
+-- Es_Raiz marca la cuenta de administrador raíz creada por seed_admin.py; no puede eliminarse ni cambiar de rol.
 CREATE TABLE "USUARIO" (
     "Id_Usuario"        SERIAL PRIMARY KEY,
     "Nombre"            VARCHAR(100) NOT NULL,
@@ -38,6 +39,7 @@ CREATE TABLE "USUARIO" (
     "Fecha_Bloqueo"     TIMESTAMP,
     "Id_Rol"            INTEGER,
     "Foto_Perfil"       VARCHAR(255),
+    "Es_Raiz"           BOOLEAN      DEFAULT FALSE NOT NULL,
 
     CONSTRAINT "Chk_Intentos_Fallidos"
         CHECK ("Intentos_Fallidos" BETWEEN 0 AND 3)
@@ -176,44 +178,16 @@ ALTER TABLE "HISTORIALCAMBIOS"
     ON UPDATE CASCADE;
 
 -- ═══════════════════════════════════════════════════════════
---  4. DATOS DE PRUEBA
+--  4. DATOS INICIALES
 -- ═══════════════════════════════════════════════════════════
 
--- Roles
+-- Roles del sistema (requeridos antes de ejecutar seed_admin.py)
 INSERT INTO "ROL" ("Nombre_Rol", "Descripcion") VALUES
     ('Administrador', 'Gestiona usuarios, clientes y configuración del sistema.'),
     ('Empleado',      'Gestiona información de clientes y registra pagos.');
 
--- Usuarios con contraseñas en texto plano (SOLO para pruebas locales rápidas)
-INSERT INTO "USUARIO" ("Nombre", "Username", "Correo", "Contrasena", "Estado", "Id_Rol") VALUES
-    ('Admin Local',    'adminlocal',    'adminlocal@solarver.com',    'Admin2024',    TRUE, 1),
-    ('Empleado Local', 'empleadolocal', 'empleadolocal@solarver.com', 'Empleado2024', TRUE, 2);
-
--- Clientes de prueba
-INSERT INTO "CLIENTE" ("Nombre_Completo", "Identificacion", "Correo", "Telefono", "Direccion", "Fecha_Pago", "Estado") VALUES
-    ('Carlos Mendoza Ruíz',  'MERC850101HVR001', 'carlos.mendoza@email.com',  '2291100001', 'Calle Morelos 12, Veracruz',      5,  'Activo'),
-    ('Ana López Sánchez',    'LOSA920215MVR002', 'ana.lopez@email.com',        '2291100002', 'Av. Insurgentes 45, Boca del Río', 17, 'Activo'),
-    ('Roberto Silva Díaz',   'SIDR780320HVR003', 'roberto.silva@email.com',    '2291100003', 'Calle Juárez 88, Veracruz',       5,  'Activo'),
-    ('María García Torres',  'GATM950710MVR004', 'maria.garcia@email.com',     '2291100004', 'Blvd. Manuel Ávila 22, Veracruz', 17, 'Activo'),
-    ('Daniel Landero Arias', 'FOCP010317MVR006', 'dlandero2005@gmail.com',  '522291294878', 'Av. 20 de Noviembre 34, Veracruz',17, 'Activo');
-
--- Deudas iniciales (Añadido Plazo_Meses e Interes_Acumulado)
-INSERT INTO "DEUDA" ("Id_Cliente", "Monto_Total", "Saldo_Pendiente", "Estatus", "Fecha_Ultimo_Corte", "Plazo_Meses", "Interes_Acumulado", "Fecha_Ultima_Penalizacion") VALUES
-    (1, 15000.00, 12500.00, 'pendiente', CURRENT_DATE, 12, 0.00, NULL),
-    (2,  8500.00,  8500.00, 'atrasado',  CURRENT_DATE - INTERVAL '20 days', 6, 0.00, NULL),
-    (3, 12000.00,     0.00, 'pagado',    CURRENT_DATE, 12, 0.00, NULL),
-    (4,  9800.00,  4900.00, 'pendiente', CURRENT_DATE, 24, 0.00, NULL),
-    (5, 11000.00, 11000.00, 'atrasado',  CURRENT_DATE - INTERVAL '5 days', 18, 0.00, NULL);
-
--- Pagos de prueba
-INSERT INTO "PAGO" ("Id_Deuda", "Monto", "Fecha_Pago", "Metodo_Pago", "Folio", "Estado") VALUES
-    (1, 2500.00, NOW() - INTERVAL '15 days', 'Transferencia', 'FOL-500000', 'completado'),
-    (3, 6000.00, NOW() - INTERVAL '30 days', 'Efectivo',      'FOL-500001', 'completado'),
-    (3, 6000.00, NOW() - INTERVAL '5 days',  'Transferencia', 'FOL-500002', 'completado'),
-    (4, 4900.00, NOW() - INTERVAL '10 days', 'Tarjeta',       'FOL-500003', 'completado');
-
--- Ajustar la secuencia de folios al siguiente disponible
-SELECT setval('folio_seq', 500004);
+-- NOTA: el usuario administrador raíz se crea ejecutando seed_admin.py
+--       después de inicializar esta base de datos.
 
 -- ═══════════════════════════════════════════════════════════
 --  5. VERIFICACIÓN FINAL
@@ -223,5 +197,5 @@ SELECT 'Tablas creadas:' AS info;
 -- Filtra por 'public' para excluir tablas internas del sistema de PostgreSQL.
 SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;
 
-SELECT 'Deudas:' AS info;
-SELECT "Id_Deuda", "Id_Cliente", "Monto_Total", "Saldo_Pendiente", "Plazo_Meses", "Interes_Acumulado", "Estatus" FROM "DEUDA";
+SELECT 'Roles registrados:' AS info;
+SELECT "Id_Rol", "Nombre_Rol" FROM "ROL";
